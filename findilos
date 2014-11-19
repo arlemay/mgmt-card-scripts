@@ -4,9 +4,10 @@
 #            The iLO is the Integrated Lights-Out management processor
 #            used on HP ProLiant and BladeSystem servers
 #
-scriptversion="1.0"
+scriptversion="1.1"
 #
 # Author: iggy@nachotech.com
+# modified by alemay@redhat.com
 #
 # Website: http://blog.nachotech.com
 #
@@ -88,7 +89,11 @@ iprange=$1
 cat > $ilohwvers << EOF
 iLO-1 shows hw version ASIC:  2
 iLO-2 shows hw version ASIC:  7
-iLO-3 shows hv version ASTC:  9
+iLO-3 shows hw version ASIC: 8
+iLO-3 shows hw version ASIC: 9
+iLO-4 shows hw version ASIC: 12
+iLO-4 shows hw version ASIC: 17
+iLO-4 shows hw version ASIC: 16
 i-iLO shows hw version T0
 EOF
 
@@ -140,7 +145,7 @@ while read iloip <&3 ; do
     sernum="N/A"
   fi
 
-  printf "%-15s %-6s %-8s %-12s %s\n"  $(host $iloip | cut -f5 -d ' ') "$ilohwver" "$ilofirmware" "$sernum" "$servermodel"
+  printf "%-15s %-6s %-8s %-12s %s\n" $iloip "$ilohwver" "$ilofirmware" "$sernum" "$servermodel"
 
 done
 
