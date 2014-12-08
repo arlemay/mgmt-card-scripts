@@ -1,0 +1,130 @@
+#!/bin/bash
+#
+# findfsps - Search a local network segment for fsps
+#
+scriptversion="1.0"
+# written by alemay@redhat.com
+#
+#
+# Code based on Author: iggy@nachotech.com's findilo script
+#
+
+# GLOBAL VARIABLES
+
+scriptname="findfsps"
+fspips="/tmp/tmpfsps.$$"
+fspxml="/tmp/tmpfspxml.$$"
+fsphwvers="/tmp/tmpfsphwvers.$$"
+
+declare -i fspsfound=0
+
+# FUNCTIONS
+
+
+function is_installed {
+  which $1 > /dev/null 2>&1
+  if [ $? -ne 0 ]
+  then
+    printf "\nERROR: %s not installed.\n\n" $1
+    exit 255
+  fi
+}
+
+# MAIN
+
+# check for tools that we depend upon
+
+is_installed tr
+is_installed sed
+is_installed expr
+is_installed curl
+is_installed nmap
+
+# check syntax - should have 1 and only 1 parameter on cmdline
+
+if [ $# -ne 1 ]; then
+  printf "%s %s ( )\n" $scriptname $scriptversion
+  printf "Usage: %s {target network specification}\n" $scriptname
+  printf "TARGET NETWORK SPECIFICATION:\n"
+  printf "  Ex: server1.company.com, company.com/24, 192.168.0.1/16, 10.0.0-255.1-254\n"
+  printf "EXAMPLE:\n"
+  printf "  %s 10.10.10.0/22\n" $scriptname
+  exit 255
+fi
+
+iprange=$1
+
+
+printf "Scanning..."
+
+nmap -n -P0 -sS -p 30000 -oG - $iprange | fgrep /open/ | awk '{print $2}' > $fspips
+
+printf "\n\n"
+
+#
+# open and read the list of IP addresses one at a time
+#
+
+exec 3< $fspips
+
+echo "--------------- ------ ---------------------------------- -------------------------"
+echo "fsp IP Address  fsp HW fsp FW               Server S/N   Server Model"
+echo "--------------- ------ ------------------------------------ -------------------------"
+
+while read fspip <&3 ; do
+  fspsfound=$fspsfound+1
+  #
+  # attempt to read the xmldata from fsp, no password required
+  #
+  curl --insecure --proxy "" --fail --silent --max-time 3 https://$fspip/cgi-bin/cgi?form=4  > $fspxml
+  curl --insecure --proxy "" --fail --silent --max-time 3 https://$fspip/cgi-bin/cgi?form=1  >> $fspxml
+
+  #
+  # parse out the Server model (server product name)
+  # from the cgi-bin info
+  #
+sernum=""
+servermodel=""
+fsphwver=""
+fspfirmware=""
+
+# power 7 firmware or power 8 firmware
+version7=$(cat $fspxml | grep FW[7][0-9][0-9] )
+version8=$(cat $fspxml | grep FW[8][0-9][0-9] )
+
+if [ "$version8" == "" ]; then
+fspfirmware=$(cat $fspxml | egrep "AL|FW" |  awk -F '[><]' '{print $(NF-2)}')
+else
+fspfirmware=$(cat $fspxml | egrep "AL[8][0-9][0-9]|FW[8][0-9][0-9]" |  awk -F '[><]' '{print $(NF-4)}')
+fi
+servermodel=$(cat $fspxml | grep model| awk '{print $3}'|  tr -d -c [:print:] | cut -d'<' -f 1)
+sernum=$(cat $fspxml | grep -i serial | awk '{print $3}' | cut -d'<' -f 1)
+#
+  if [ "$sernum" == "" ]; then
+    sernum="N/A"
+  fi
+
+  if [ "$servermodel" == "" ]; then
+    servermodel="N/A"
+  fi
+
+  if [ "$fsphwver" == "" ]; then
+    fsphwver="N/A"
+  fi
+
+  if [ "$fspfirmware" == "" ]; then
+    fspfirmware="N/A"
+  fi
+
+
+
+
+  printf "%-15s %-6s %-20s %-12s %s\n" $fspip "$fsphwver" "$fspfirmware" "$sernum" "$servermodel"
+
+done
+
+printf "\n%d fsps found on network target %s.\n\n" $fspsfound $iprange
+
+rm -f $fspips $fspxml $fsphwvers $sernum $servermodel $fspfirmware
+
+exit 0
