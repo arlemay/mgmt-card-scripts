@@ -88,15 +88,38 @@ servermodel=""
 fsphwver=""
 fspfirmware=""
 
-# power 7 firmware or power 8 firmware
-version7=$(cat $fspxml | grep FW[7][0-9][0-9] )
-version8=$(cat $fspxml | grep FW[8][0-9][0-9] )
 
-if [ "$version8" == "" ]; then
-fspfirmware=$(cat $fspxml | egrep "AL|FW" |  awk -F '[><]' '{print $(NF-2)}')
+# power 7 firmware or power 8 firmware
+power7=$(cat $fspxml | egrep "AL[7][0-9][0-9]|FW[7][0-9][0-9]" )
+power8=$(cat $fspxml | egrep "AL[8][0-9][0-9]|FW[8][0-9][0-9]" )
+
+if [[ "$power8" == "" && "$power7" != "" ]]; then
+
+#must be power7
+
+#fsphwver="p7"
+
+fspfirmware=$(cat $fspxml | egrep "AL[7][0-9][0-9]|FW[7][0-9][0-9]" |  awk -F '[><]' '{print $(NF-2)}')
 else
-fspfirmware=$(cat $fspxml | egrep "AL[8][0-9][0-9]|FW[8][0-9][0-9]" |  awk -F '[><]' '{print $(NF-4)}')
+#must be power 8
+# but there are two versions
+power8a=$(cat $fspxml | egrep "AL[8][0-9][0-9]|FW[8][0-9][0-9]" |  awk -F '[><]' '{print $(NF-4)}')
+power8b=$(cat $fspxml | egrep "AL[8][0-9][0-9]|FW[8][0-9][0-9]" |  awk -F '[><]' '{print $(NF-2)}')
+
+
+        if [ "$power8a" == "" ]; then
+                fspfirmware=$power8b
+	#	fsphwver="p8"
+                else
+                fspfirmware=$power8a
+	#	fsphwver="p8"
+        fi
+
 fi
+
+
+
+
 servermodel=$(cat $fspxml | grep model| awk '{print $3}'|  tr -d -c [:print:] | cut -d'<' -f 1)
 sernum=$(cat $fspxml | grep -i serial | awk '{print $3}' | cut -d'<' -f 1)
 #
