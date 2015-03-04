@@ -6,7 +6,8 @@ Scripts used to find mgmt cards ilo drac fsp
 
 HP Ilo example
 
-{{{[WOPR2 mgmt-card-scripts]$ sudo ./findilos x.0.0.0/24
+```
+[WOPR2 mgmt-card-scripts]$ sudo ./findilos x.0.0.0/24
 Scanning...
 
 --------------- ------ -------- ------------ -------------------------
@@ -25,11 +26,12 @@ x.0.0.11b    iLO-4  2.02     MXxxxxxxxx   6xxxxx-xxx ProLiant DL320e Gen8
 x.0.0.11c    iLO-4  2.02     MXxxxxxxxx   6xxxxx-xxx ProLiant DL320e Gen8
 
 11 iLOs found on network target x.0.0.0/24.
-}}}
+```
 
 IBM fsp example 
 
- {{{[@WOPR2 mgmt-card-scripts]$ sudo ./findfsps x.x.xx.0/21
+``` 
+[@WOPR2 mgmt-card-scripts]$ sudo ./findfsps x.x.xx.0/21
 Scanning...
 
 --------------- ------ ---------------------------------- -------------------------
@@ -66,5 +68,5 @@ x.x.xx.140    N/A    FW810.20 (SV810_xxx) 2xxxxxx      8247-22L
 x.x.xx.141    N/A    FW810.20 (SV810_xxx) 2xxxxxx      8247-22L
 
 29 fsps found on network target x.x.x.0/21.
-}}}
+```
 
