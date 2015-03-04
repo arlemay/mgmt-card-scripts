@@ -4,7 +4,7 @@
 #            The iLO is the Integrated Lights-Out management processor
 #            used on HP ProLiant and BladeSystem servers
 #
-scriptversion="1.1"
+scriptversion="1.2"
 #
 # Author: iggy@nachotech.com
 # modified by alemay@redhat.com
@@ -31,6 +31,7 @@ scriptname="findilos"
 iloips="/tmp/tmpilos.$$"
 iloxml="/tmp/tmpiloxml.$$"
 ilohwvers="/tmp/tmpilohwvers.$$"
+PRODUCTID="/tmp/tmpPRODUCTID.$$"
 
 declare -i ilosfound=0
 
@@ -115,7 +116,7 @@ printf "\n\n"
 exec 3< $iloips
 
 echo "--------------- ------ -------- ------------ -------------------------"
-echo "iLO IP Address  iLO HW iLO FW   Server S/N   Server Model"
+echo "iLO IP Address  iLO HW iLO FW   Server S/N   Productid   Server Model "
 echo "--------------- ------ -------- ------------ -------------------------"
 
 while read iloip <&3 ; do
@@ -135,6 +136,7 @@ while read iloip <&3 ; do
   parseiloxml PN;   ilotype=$parsedstring
   parseiloxml FWRI; ilofirmware=$parsedstring
   parseiloxml HWRI; ilohardware=$parsedstring
+  parseiloxml PRODUCTID; PRODUCTID=$parsedstring
 
   ilohwver=$(grep "$ilohardware" $ilohwvers|awk '{print $1}')
   if [ "$ilohwver" == "" ]; then
@@ -144,8 +146,7 @@ while read iloip <&3 ; do
   if [ "$sernum" == "" ]; then
     sernum="N/A"
   fi
-
-  printf "%-15s %-6s %-8s %-12s %s\n" $iloip "$ilohwver" "$ilofirmware" "$sernum" "$servermodel"
+  printf "%-15s %-6s %-8s %-12s %-10s %s\n" $iloip "$ilohwver" "$ilofirmware" "$sernum"  "$PRODUCTID" "$servermodel"
 
 done
 
